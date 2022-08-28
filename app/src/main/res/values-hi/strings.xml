@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="title_home">होम</string>
+    <string name="title_search">खोज</string>
+    <string name="title_anime_list">ऍनिमे</string>
+    <string name="title_manga_list">मांगा</string>
+    <string name="error_anilist_login">ऍनिलिस्ट पर लॉगइन नहीं कर सके</string>
+    <string name="action_filter_list">फ़िल्टर</string>
+    <string name="title_profile">प्रोफ़ाइल</string>
+    <string name="title_list">मेरी सुची</string>
+</resources>

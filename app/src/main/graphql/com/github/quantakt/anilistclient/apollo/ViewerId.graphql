@@ -1,0 +1,6 @@
+query ViewerId {
+  Viewer {
+    __typename
+    id
+  }
+}

@@ -1,0 +1,42 @@
+query MediaList(
+    $userId: Int!,
+    $type: MediaType,
+    $status_in: [MediaListStatus],
+    $sort: [MediaListSort],
+    $perPage: Int,
+    $page: Int,
+) {
+    Page(perPage: $perPage, page: $page) {
+
+        pageInfo {
+            perPage
+            currentPage
+            hasNextPage
+            lastPage
+        }
+
+        mediaList(userId: $userId, type: $type, status_in: $status_in, sort: $sort) {
+            __typename
+            id
+            userId
+            progress
+            progressVolumes
+            score
+            status
+            customLists
+            media {
+                id
+                coverImage {
+                    large
+                }
+                title {
+                    userPreferred
+                }
+                type
+                episodes
+                chapters
+                volumes
+            }
+        }
+    }
+}

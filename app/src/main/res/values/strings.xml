@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">AniList Client</string>
+
+    <string name="title_home">Home</string>
+    <string name="title_list">My List</string>
+    <string name="title_profile">Profile</string>
+    <string name="title_search">Search</string>
+    <string name="title_anime_list">Anime</string>
+    <string name="title_manga_list">Manga</string>
+
+    <string name="error_anilist_login">Failed to login to AniList</string>
+
+    <string name="action_filter_list">Filter</string>
+
+    <string name="anime_status_current">Watching</string>
+    <string name="anime_status_repeating">Re-watching</string>
+    <string name="manga_status_current">Reading</string>
+    <string name="manga_status_repeating">Re-reading</string>
+    <string name="anmanga_status_paused">Paused</string>
+    <string name="animanga_status_completed">Completed</string>
+    <string name="animanga_status_dropped">Dropped</string>
+</resources>
