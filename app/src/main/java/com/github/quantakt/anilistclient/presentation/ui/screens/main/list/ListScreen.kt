@@ -4,12 +4,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.*
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetLayout
+import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.Sort
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.rememberModalBottomSheetState
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +30,7 @@ import com.github.quantakt.anilistclient.R
 import com.github.quantakt.anilistclient.domain.entities.MediaListItem
 import com.github.quantakt.anilistclient.domain.entities.MediaListStatus
 import com.github.quantakt.anilistclient.domain.entities.MediaType
+import com.github.quantakt.anilistclient.presentation.ui.components.CustomTabRow
 import kotlinx.coroutines.launch
 
 @Composable
@@ -49,6 +51,7 @@ fun ListScreen(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ListScreen(
     state: ListScreenState,
@@ -61,25 +64,38 @@ fun ListScreen(
     onUpdateProgressVolume: (mediaListItem: MediaListItem, progress: Int) -> Unit,
 ) {
 
+    val selectedTab = state.selectedTab
+    val selectedTabIndex = state.selectedTab.ordinal
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
+        SmallTopAppBar(
+            modifier = Modifier.fillMaxWidth(),
+            title = {
+                Text("My List")
+            },
+            actions = {
+                IconButton(onClick = { /*TODO*/ }) {
+                    Icon(imageVector = Icons.Default.Search, contentDescription = null)
+                }
+                IconButton(onClick = { /*TODO*/ }) {
+                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                }
+            },
+        )
 
-        val selectedTab = state.selectedTab
-        val selectedTabIndex = state.selectedTab.ordinal
-
-        TabRow(
+        CustomTabRow(
             modifier = Modifier.fillMaxWidth(),
             selectedTabIndex = selectedTabIndex,
-            backgroundColor = MaterialTheme.colors.background,
-            contentColor = MaterialTheme.colors.primary
+            contentColor = MaterialTheme.colorScheme.primary,
         ) {
             MediaType.values().forEach {
 
                 val color = if (selectedTab == it) {
-                    MaterialTheme.colors.primary
+                    MaterialTheme.colorScheme.primary
                 } else {
-                    MaterialTheme.colors.onSurface
+                    MaterialTheme.colorScheme.onSurface
                 }
 
                 val label = if (it == MediaType.ANIME) {
@@ -90,15 +106,15 @@ fun ListScreen(
 
                 Tab(
                     selected = selectedTab == it,
-                    onClick = { onChangeTab(it) }
-                ) {
-                    Text(
-                        modifier = Modifier.padding(12.dp),
-                        text = stringResource(label),
-                        style = MaterialTheme.typography.body1,
-                        color = color,
-                    )
-                }
+                    onClick = { onChangeTab(it) },
+                    text = {
+                        Text(
+                            text = stringResource(label),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = color,
+                        )
+                    }
+                )
             }
         }
 
@@ -244,9 +260,7 @@ private fun FilterSheet(
         )
 
         if (customLists.isNotEmpty()) {
-            Divider(modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp))
+            Divider(modifier = Modifier.padding(16.dp))
 
             customLists.forEach { customListName ->
                 FilterItem(
@@ -313,9 +327,11 @@ private fun MediaList(
         initialValue = ModalBottomSheetValue.Hidden
     )
 
+    // TODO: Replace with material 3 bottom sheet API when available
     ModalBottomSheetLayout(
         sheetState = sheetState,
         sheetContent = sheetContent,
+        sheetBackgroundColor = MaterialTheme.colorScheme.surface,
     ) {
         Box(
             modifier = Modifier.fillMaxSize()
@@ -430,7 +446,7 @@ private fun LoadStateError(
         Text(
             textAlign = TextAlign.Center,
             text = error,
-            color = MaterialTheme.colors.error
+            color = MaterialTheme.colorScheme.error
         )
 
         Button(onClick = onClickRetry) {
@@ -446,7 +462,19 @@ private fun MediaListItem(
     onUpdateProgress: (progress: Int) -> Unit,
     onUpdateProgressVolume: (progress: Int) -> Unit,
 ) {
-    Card(modifier = modifier) {
+
+    // TODO: Display placeholders when mediaListItem is null
+    val mediaListItem = item ?: return
+    val title = mediaListItem.title
+    val progress = mediaListItem.progress
+    val progressVolume = mediaListItem.progressVolume
+
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
 
         Row(modifier = Modifier.height(IntrinsicSize.Min)) {
 
@@ -454,7 +482,7 @@ private fun MediaListItem(
                 modifier = Modifier
                     .fillMaxHeight()
                     .width(96.dp),
-                painter = rememberImagePainter(item?.coverImageUrl),
+                painter = rememberImagePainter(mediaListItem.coverImageUrl),
                 contentDescription = null,
                 contentScale = ContentScale.Crop
             )
@@ -466,16 +494,16 @@ private fun MediaListItem(
             ) {
 
                 // Title
-                item?.title?.let {
+                if (title != null) {
                     Text(
                         modifier = Modifier.padding(8.dp),
-                        text = it,
-                        style = MaterialTheme.typography.body1.copy(fontWeight = FontWeight.Bold)
+                        text = title,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
                     )
                 }
 
                 // Score
-                MediaScore(score = item?.score) {
+                MediaScore(score = mediaListItem.score) {
                     // TODO
                 }
             }
@@ -486,8 +514,9 @@ private fun MediaListItem(
                     .padding(horizontal = 8.dp)
                     .height(intrinsicSize = IntrinsicSize.Min)
             ) {
-                item?.progress?.let { progress ->
-                    val total = (item.totalEpisodes ?: item.totalChapters)
+
+                if (progress != null) {
+                    val total = (mediaListItem.totalEpisodes ?: mediaListItem.totalChapters)
                     MediaProgress(
                         modifier = Modifier.fillMaxHeight(),
                         progress = progress,
@@ -501,18 +530,18 @@ private fun MediaListItem(
                     )
                 }
 
-                item?.progressVolume?.let { progress ->
+                if (progressVolume != null) {
                     MediaProgress(
                         modifier = Modifier
                             .fillMaxHeight()
                             .padding(start = 4.dp),
-                        progress = progress,
-                        total = item.totalVolumes,
+                        progress = progressVolume,
+                        total = mediaListItem.totalVolumes,
                         onClickIncrement = {
-                            onUpdateProgressVolume(progress + 1)
+                            onUpdateProgressVolume(progressVolume + 1)
                         },
                         onClickDecrement = {
-                            onUpdateProgressVolume(progress - 1)
+                            onUpdateProgressVolume(progressVolume - 1)
                         },
                     )
                 }
@@ -542,12 +571,12 @@ private fun MediaScore(
             modifier = Modifier.padding(end = 8.dp),
             imageVector = Icons.Filled.Star,
             contentDescription = null,
-            tint = MaterialTheme.colors.primary
+            tint = MaterialTheme.colorScheme.primary
         )
 
         Text(
             text = formattedScore,
-            style = MaterialTheme.typography.body2,
+            style = MaterialTheme.typography.bodySmall,
         )
     }
 }
@@ -563,10 +592,8 @@ private fun MediaProgress(
 
     val incrementEnabled = total == null || progress < total
     val decrementEnabled = progress > 0
-    val incrementIconAlpha = if (incrementEnabled) ContentAlpha.high else ContentAlpha.disabled
-    val decrementIconAlpha = if (decrementEnabled) ContentAlpha.high else ContentAlpha.disabled
 
-    CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.body2) {
+    CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodySmall) {
         Column(
             modifier = modifier
                 .clip(MaterialTheme.shapes.small)
@@ -576,21 +603,19 @@ private fun MediaProgress(
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
 
-            CompositionLocalProvider(LocalContentAlpha provides incrementIconAlpha) {
-                Icon(
-                    modifier = Modifier
-                        .padding(vertical = 4.dp)
-                        .clip(MaterialTheme.shapes.small)
-                        .clickable(
-                            onClick = onClickIncrement,
-                            enabled = incrementEnabled
-                        )
-                        .padding(vertical = 8.dp)
-                        .fillMaxWidth(),
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = null,
-                )
-            }
+            Icon(
+                modifier = Modifier
+                    .padding(vertical = 4.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .clickable(
+                        onClick = onClickIncrement,
+                        enabled = incrementEnabled
+                    )
+                    .padding(vertical = 8.dp)
+                    .fillMaxWidth(),
+                imageVector = Icons.Filled.Add,
+                contentDescription = null,
+            )
 
             Text(
                 modifier = Modifier
@@ -604,18 +629,16 @@ private fun MediaProgress(
 
             Text(text = total?.toString() ?: "?")
 
-            CompositionLocalProvider(LocalContentAlpha provides decrementIconAlpha) {
-                Icon(
-                    modifier = Modifier
-                        .padding(vertical = 4.dp)
-                        .clip(MaterialTheme.shapes.small)
-                        .clickable(onClick = onClickDecrement, enabled = decrementEnabled)
-                        .padding(vertical = 8.dp)
-                        .fillMaxWidth(),
-                    imageVector = Icons.Filled.Remove,
-                    contentDescription = null,
-                )
-            }
+            Icon(
+                modifier = Modifier
+                    .padding(vertical = 4.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .clickable(onClick = onClickDecrement, enabled = decrementEnabled)
+                    .padding(vertical = 8.dp)
+                    .fillMaxWidth(),
+                imageVector = Icons.Filled.Remove,
+                contentDescription = null,
+            )
         }
     }
 }

@@ -2,18 +2,19 @@ package com.github.quantakt.anilistclient.presentation.ui.screens.main
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
@@ -29,11 +30,10 @@ import com.github.quantakt.anilistclient.presentation.navigation.NavGraph
 import com.github.quantakt.anilistclient.presentation.navigation.Screen
 import com.github.quantakt.anilistclient.presentation.ui.activities.main.MainActivityViewModel
 import com.github.quantakt.anilistclient.presentation.ui.theme.AppTheme
-import com.google.accompanist.insets.ui.BottomNavigation
-import com.google.accompanist.insets.ui.Scaffold
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun App(onLoginRequest: () -> Unit) {
     val navController = rememberNavController()
@@ -60,38 +60,47 @@ fun App(onLoginRequest: () -> Unit) {
     }
 
     AppTheme {
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding(),
-            color = MaterialTheme.colors.background
-        ) {
-            Scaffold(
-                modifier = Modifier.statusBarsPadding(),
-                content = { paddingValues ->
-                    NavGraph(
-                        modifier = Modifier.padding(paddingValues),
-                        navController = navController,
-                        onLoginRequest = onLoginRequest
-                    )
-                },
-                bottomBar = {
-                    BottomBar(
-                        navController = navController,
-                        contentPadding = WindowInsets.navigationBars
-                            .only(WindowInsetsSides.Bottom)
-                            .asPaddingValues()
-                    )
-                },
-            )
-        }
+        Scaffold(
+            content = { paddingValues ->
+
+                val layoutDirection = LocalLayoutDirection.current
+
+                val paddingBottom = paddingValues.calculateBottomPadding()
+                val paddingLeft = paddingValues.calculateLeftPadding(layoutDirection)
+                val paddingRight = paddingValues.calculateRightPadding(layoutDirection)
+                val paddingStart = paddingValues.calculateStartPadding(layoutDirection)
+                val paddingEnd = paddingValues.calculateEndPadding(layoutDirection)
+
+                val windowInsets = WindowInsets(
+                    bottom = paddingBottom,
+                    right = paddingRight,
+                    left = paddingLeft,
+                )
+
+                NavGraph(
+                    modifier = Modifier
+                        .padding(
+                            bottom = paddingBottom,
+                            end = paddingEnd,
+                            start = paddingStart
+                        )
+                        .consumedWindowInsets(windowInsets),
+                    navController = navController,
+                    onLoginRequest = onLoginRequest
+                )
+            },
+            bottomBar = {
+                NavBar(
+                    navController = navController
+                )
+            },
+        )
     }
 }
 
 @Composable
-private fun BottomBar(
+private fun NavBar(
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(),
     navController: NavController,
 ) {
 
@@ -100,13 +109,9 @@ private fun BottomBar(
 
     // Show bottom nav only when relevant
     if (selectedNavItem != null) {
-        BottomNavigation(
-            modifier = modifier.fillMaxWidth(),
-            backgroundColor = MaterialTheme.colors.surface,
-            contentPadding = contentPadding,
-        ) {
-            bottomNavItems.forEach { item ->
-                BottomBarItem(item = item, selected = selectedNavItem == item) {
+        NavigationBar(modifier = modifier) {
+            navItems.forEach { item ->
+                NavBarItem(item = item, selected = selectedNavItem == item) {
                     navController.navigate(item.screen.route) {
                         popUpTo(navController.graph.findStartDestination().id) {
                             saveState = true
@@ -122,12 +127,12 @@ private fun BottomBar(
 }
 
 @Composable
-private fun RowScope.BottomBarItem(
+private fun RowScope.NavBarItem(
     item: NavItem,
     selected: Boolean,
     onClick: () -> Unit = { /* no-op */ },
 ) {
-    BottomNavigationItem(
+    NavigationBarItem(
         selected = selected,
         onClick = onClick,
         icon = {
@@ -148,7 +153,7 @@ private class NavItem(
     @StringRes val labelRes: Int,
 )
 
-private val bottomNavItems = listOf(
+private val navItems = listOf(
     NavItem(
         screen = BottomNavScreen.Home,
         icon = Icons.Default.Home,
@@ -172,7 +177,7 @@ private val bottomNavItems = listOf(
 )
 
 // mapping of routes to nav items
-private val routeToScreen = bottomNavItems.associateBy { it.screen.route }
+private val routeToScreen = navItems.associateBy { it.screen.route }
 
 @Stable
 @Composable
