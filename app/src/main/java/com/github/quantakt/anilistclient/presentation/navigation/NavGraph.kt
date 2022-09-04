@@ -150,7 +150,8 @@ private fun NavGraphBuilder.addMediaDetails(navController: NavHostController) {
             viewModel = hiltViewModel(),
             openMedia = { mediaId ->
                 navController.navigate(Screen.MediaDetails.createRoute(mediaId))
-            }
+            },
+            navigateUp = navController::navigateUp,
         )
     }
 }
