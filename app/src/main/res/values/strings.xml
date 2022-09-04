@@ -14,6 +14,9 @@
 
     <string name="action_filter_list">Filter</string>
     <string name="action_retry">Retry</string>
+    <string name="action_sign_in_with_anilist">Sign in with AniList</string>
+
+    <string name="description_sign_in">Sign-in with AniList to continue</string>
 
     <string name="anime_status_current">Watching</string>
     <string name="anime_status_repeating">Re-watching</string>
