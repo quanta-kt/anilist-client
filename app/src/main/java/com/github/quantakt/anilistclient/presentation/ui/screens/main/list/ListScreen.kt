@@ -30,6 +30,7 @@ import com.github.quantakt.anilistclient.R
 import com.github.quantakt.anilistclient.domain.entities.MediaListItem
 import com.github.quantakt.anilistclient.domain.entities.MediaListStatus
 import com.github.quantakt.anilistclient.domain.entities.MediaType
+import com.github.quantakt.anilistclient.presentation.localization.stringRes
 import com.github.quantakt.anilistclient.presentation.ui.components.CustomTabRow
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
@@ -163,6 +164,8 @@ fun ListScreen(
     }
 }
 
+private val allMediaListStatuses = MediaListStatus.values()
+
 @Composable
 private fun FilterSheet(
     type: MediaType,
@@ -178,87 +181,22 @@ private fun FilterSheet(
             .padding(16.dp)
     ) {
 
-        // FIXME: Generalise this as a loop
-        FilterItem(
-            modifier = Modifier.fillMaxWidth(),
-            checked = MediaListStatus.CURRENT in statusFilters,
-            text = stringResource(
-                if (type == MediaType.ANIME) R.string.anime_status_current
-                else R.string.manga_status_current
-            ),
-            onCheckedChange = {
-                val new = if (it) {
-                    statusFilters + MediaListStatus.CURRENT
-                } else {
-                    statusFilters - MediaListStatus.CURRENT
+        allMediaListStatuses.forEach { status ->
+            FilterItem(
+                modifier = Modifier.fillMaxWidth(),
+                checked = status in statusFilters,
+                text = stringResource(status.stringRes(type)),
+                onCheckedChange = {
+                    val new = if (it) {
+                        statusFilters + status
+                    } else {
+                        statusFilters - status
+                    }
+
+                    onUpdateStatusFilter(new)
                 }
-
-                onUpdateStatusFilter(new)
-            }
-        )
-
-        FilterItem(
-            modifier = Modifier.fillMaxWidth(),
-            checked = MediaListStatus.REPEATING in statusFilters,
-            text = stringResource(
-                if (type == MediaType.ANIME) R.string.anime_status_repeating
-                else R.string.manga_status_repeating
-            ),
-            onCheckedChange = {
-                val new = if (it) {
-                    statusFilters + MediaListStatus.REPEATING
-                } else {
-                    statusFilters - MediaListStatus.REPEATING
-                }
-
-                onUpdateStatusFilter(new)
-            }
-        )
-
-        FilterItem(
-            modifier = Modifier.fillMaxWidth(),
-            checked = MediaListStatus.PAUSED in statusFilters,
-            text = stringResource(R.string.anmanga_status_paused),
-            onCheckedChange = {
-                val new = if (it) {
-                    statusFilters + MediaListStatus.PAUSED
-                } else {
-                    statusFilters - MediaListStatus.PAUSED
-                }
-
-                onUpdateStatusFilter(new)
-            }
-        )
-
-        FilterItem(
-            modifier = Modifier.fillMaxWidth(),
-            checked = MediaListStatus.COMPLETED in statusFilters,
-            text = stringResource(R.string.animanga_status_completed),
-            onCheckedChange = {
-                val new = if (it) {
-                    statusFilters + MediaListStatus.COMPLETED
-                } else {
-                    statusFilters - MediaListStatus.COMPLETED
-                }
-
-                onUpdateStatusFilter(new)
-            }
-        )
-
-        FilterItem(
-            modifier = Modifier.fillMaxWidth(),
-            checked = MediaListStatus.DROPPED in statusFilters,
-            text = stringResource(R.string.animanga_status_dropped),
-            onCheckedChange = {
-                val new = if (it) {
-                    statusFilters + MediaListStatus.DROPPED
-                } else {
-                    statusFilters - MediaListStatus.DROPPED
-                }
-
-                onUpdateStatusFilter(new)
-            }
-        )
+            )
+        }
 
         if (customLists.isNotEmpty()) {
             Divider(modifier = Modifier.padding(16.dp))

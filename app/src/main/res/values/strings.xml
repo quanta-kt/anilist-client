@@ -21,6 +21,7 @@
     <string name="manga_status_repeating">Re-reading</string>
     <string name="anmanga_status_paused">Paused</string>
     <string name="animanga_status_completed">Completed</string>
+    <string name="animanga_status_planning">Planning</string>
     <string name="animanga_status_dropped">Dropped</string>
 
     <string name="unknown_value_placeholder">\?</string>
