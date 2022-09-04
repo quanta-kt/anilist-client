@@ -21,7 +21,7 @@ import com.github.quantakt.anilistclient.presentation.ui.screens.main.media.Medi
 import com.google.accompanist.navigation.material.ExperimentalMaterialNavigationApi
 import com.google.accompanist.navigation.material.bottomSheet
 
-sealed class Screen(open val route: String) {
+sealed class Screen(val route: String) {
     object Home : Screen("home")
     object Login : Screen("login")
 
