@@ -8,4 +8,6 @@
     <string name="action_filter_list">फ़िल्टर</string>
     <string name="title_profile">प्रोफ़ाइल</string>
     <string name="title_list">मेरी सुची</string>
+    <string name="action_retry">फ़िर कोशिश करें</string>
+    <string name="unknown_value_placeholder">\?</string>
 </resources>

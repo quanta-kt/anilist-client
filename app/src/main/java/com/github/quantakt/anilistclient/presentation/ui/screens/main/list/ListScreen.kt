@@ -32,6 +32,7 @@ import com.github.quantakt.anilistclient.domain.entities.MediaListStatus
 import com.github.quantakt.anilistclient.domain.entities.MediaType
 import com.github.quantakt.anilistclient.presentation.ui.components.CustomTabRow
 import kotlinx.coroutines.launch
+import java.text.NumberFormat
 
 @Composable
 fun ListScreen(
@@ -73,7 +74,7 @@ fun ListScreen(
         SmallTopAppBar(
             modifier = Modifier.fillMaxWidth(),
             title = {
-                Text("My List")
+                Text(stringResource(R.string.title_list))
             },
             actions = {
                 IconButton(onClick = { /*TODO*/ }) {
@@ -416,7 +417,7 @@ private fun MediaListPaging(
                         modifier = Modifier.fillMaxWidth(),
                         error = appendState.error.localizedMessage
                             ?: appendState.error.message
-                            ?: "Something went wrong",
+                            ?: stringResource(R.string.error_unnkown),
                     ) {
                         pagingItems.retry()
                     }
@@ -450,7 +451,7 @@ private fun LoadStateError(
         )
 
         Button(onClick = onClickRetry) {
-            Text("Retry")
+            Text(stringResource(R.string.action_retry))
         }
     }
 }
@@ -557,7 +558,14 @@ private fun MediaScore(
     onClick: () -> Unit,
 ) {
 
-    val formattedScore = score?.toString() ?: "?"
+    val numberFormat = remember { NumberFormat.getInstance() }
+
+    val formattedScore =
+        if (score != null) {
+            numberFormat.format(score)
+        } else {
+            stringResource(R.string.unknown_value_placeholder)
+        }
 
     Row(
         modifier = modifier
@@ -590,6 +598,8 @@ private fun MediaProgress(
     onClickDecrement: () -> Unit,
 ) {
 
+    val numberFormat = remember { NumberFormat.getInstance() }
+
     val incrementEnabled = total == null || progress < total
     val decrementEnabled = progress > 0
 
@@ -620,14 +630,20 @@ private fun MediaProgress(
             Text(
                 modifier = Modifier
                     .padding(4.dp),
-                text = progress.toString(),
+                text = numberFormat.format(progress),
             )
 
             Divider(modifier = Modifier
                 .padding(vertical = 8.dp)
                 .fillMaxWidth())
 
-            Text(text = total?.toString() ?: "?")
+            Text(
+                text = if (total != null) {
+                    numberFormat.format(total)
+                } else {
+                    stringResource(R.string.unknown_value_placeholder)
+                }
+            )
 
             Icon(
                 modifier = Modifier
