@@ -17,12 +17,25 @@ import com.github.quantakt.anilistclient.presentation.ui.screens.login.LoginScre
 import com.github.quantakt.anilistclient.presentation.ui.screens.main.home.HomeScreen
 import com.github.quantakt.anilistclient.presentation.ui.screens.main.list.ListFilter
 import com.github.quantakt.anilistclient.presentation.ui.screens.main.list.ListScreen
+import com.github.quantakt.anilistclient.presentation.ui.screens.main.media.MediaDetailsScreen
 import com.google.accompanist.navigation.material.ExperimentalMaterialNavigationApi
 import com.google.accompanist.navigation.material.bottomSheet
 
-sealed class Screen(val route: String) {
+sealed class Screen(open val route: String) {
     object Home : Screen("home")
     object Login : Screen("login")
+
+    object MediaDetails : Screen("media/{mediaId}") {
+        fun createRoute(mediaId: Int) = "media/$mediaId"
+
+        const val ARG_MEDIA_ID = "mediaId"
+
+        val arguments = listOf(
+            navArgument(ARG_MEDIA_ID) {
+                type = NavType.IntType
+            }
+        )
+    }
 }
 
 sealed class BottomNavScreen(route: String) {
@@ -63,6 +76,7 @@ fun NavGraph(
     ) {
         addLogin(navController, onLoginRequest)
         addBottomNavScreens(navController)
+        addMediaDetails(navController)
     }
 }
 
@@ -71,13 +85,17 @@ private fun NavGraphBuilder.addBottomNavScreens(navController: NavHostController
         route = Screen.Home.route,
         startDestination = BottomNavScreen.Home.route
     ) {
+
         composable(BottomNavScreen.Home.route) {
             HomeScreen()
         }
+
         addListScreen(navController)
+
         composable(BottomNavScreen.Profile.route) {
             TodoComposable()
         }
+
         composable(BottomNavScreen.Search.route) {
             TodoComposable()
         }
@@ -91,7 +109,10 @@ private fun NavGraphBuilder.addListScreen(navController: NavHostController) {
             listViewModel = hiltViewModel(),
             openFilter = { mediaType ->
                 navController.navigate(BottomNavScreen.List.Filter.createRoute(mediaType))
-            }
+            },
+            openMedia = { mediaId ->
+                navController.navigate(Screen.MediaDetails.createRoute(mediaId))
+            },
         )
     }
 
@@ -120,6 +141,20 @@ private fun NavGraphBuilder.addListScreen(navController: NavHostController) {
     }
 }
 
+private fun NavGraphBuilder.addMediaDetails(navController: NavHostController) {
+    composable(
+        route = Screen.MediaDetails.route,
+        arguments = Screen.MediaDetails.arguments,
+    ) {
+        MediaDetailsScreen(
+            viewModel = hiltViewModel(),
+            openMedia = { mediaId ->
+                navController.navigate(Screen.MediaDetails.createRoute(mediaId))
+            }
+        )
+    }
+}
+
 @Composable
 private fun BottomSheetContainer(
     content: @Composable () -> Unit,
@@ -139,7 +174,7 @@ private fun BottomSheetContainer(
 
 private fun NavGraphBuilder.addLogin(
     navController: NavHostController,
-    onLoginRequest: () -> Unit
+    onLoginRequest: () -> Unit,
 ) {
     composable(Screen.Login.route) {
         LoginScreen(onLoginRequest = onLoginRequest)
