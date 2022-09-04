@@ -6,7 +6,7 @@ import com.github.quantakt.anilistclient.data.db.AppDatabase
 import com.github.quantakt.anilistclient.data.db.dbentities.LoggedInUserEntity
 import com.github.quantakt.anilistclient.data.exceptions.AnilistAuthException
 import com.github.quantakt.anilistclient.data.pref.PreferenceManager
-import com.github.quantakt.anilistclient.base.AuthState
+import com.github.quantakt.anilistclient.domain.entities.AuthState
 import com.github.quantakt.anilistclient.domain.entities.LoggedInUser
 import com.github.quantakt.anilistclient.domain.repositories.LoginRepository
 import com.github.quantakt.apollo.ViewerIdQuery

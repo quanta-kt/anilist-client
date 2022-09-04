@@ -1,12 +1,13 @@
-package com.github.quantakt.anilistclient.domain
+package com.github.quantakt.anilistclient.domain.interactors
 
-import com.github.quantakt.anilistclient.base.InvokeError
-import com.github.quantakt.anilistclient.base.InvokeStarted
-import com.github.quantakt.anilistclient.base.InvokeState
-import com.github.quantakt.anilistclient.base.InvokeSuccess
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import com.github.quantakt.anilistclient.domain.entities.InvokeError
+import com.github.quantakt.anilistclient.domain.entities.InvokeStarted
+import com.github.quantakt.anilistclient.domain.entities.InvokeState
+import com.github.quantakt.anilistclient.domain.entities.InvokeSuccess
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 
 abstract class Interactor<in P> {
 

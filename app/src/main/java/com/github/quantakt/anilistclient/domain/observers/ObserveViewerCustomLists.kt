@@ -1,8 +1,8 @@
 package com.github.quantakt.anilistclient.domain.observers
 
-import com.github.quantakt.anilistclient.base.AuthState
+import com.github.quantakt.anilistclient.domain.entities.AuthState
 import com.github.quantakt.anilistclient.data.db.dbentities.UserCustomList
-import com.github.quantakt.anilistclient.domain.ObservableInteractor
+import com.github.quantakt.anilistclient.domain.interactors.ObservableInteractor
 import com.github.quantakt.anilistclient.domain.entities.MediaType
 import com.github.quantakt.anilistclient.domain.repositories.LoginRepository
 import com.github.quantakt.anilistclient.domain.repositories.MediaListRepository

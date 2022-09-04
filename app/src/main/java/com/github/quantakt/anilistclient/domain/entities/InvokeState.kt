@@ -1,4 +1,4 @@
-package com.github.quantakt.anilistclient.base
+package com.github.quantakt.anilistclient.domain.entities
 
 sealed class InvokeState
 object InvokeStarted : InvokeState()

@@ -24,7 +24,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.github.quantakt.anilistclient.R
-import com.github.quantakt.anilistclient.base.AuthState
+import com.github.quantakt.anilistclient.domain.entities.AuthState
 import com.github.quantakt.anilistclient.presentation.navigation.BottomNavScreen
 import com.github.quantakt.anilistclient.presentation.navigation.NavGraph
 import com.github.quantakt.anilistclient.presentation.navigation.Screen

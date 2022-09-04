@@ -1,6 +1,4 @@
-package com.github.quantakt.anilistclient.base
-
-import com.github.quantakt.anilistclient.domain.entities.LoggedInUser
+package com.github.quantakt.anilistclient.domain.entities
 
 sealed class AuthState {
     data class LoggedIn(val user: LoggedInUser): AuthState()

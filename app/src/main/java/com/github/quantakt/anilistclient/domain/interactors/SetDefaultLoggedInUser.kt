@@ -1,6 +1,5 @@
 package com.github.quantakt.anilistclient.domain.interactors
 
-import com.github.quantakt.anilistclient.domain.Interactor
 import com.github.quantakt.anilistclient.domain.repositories.LoginRepository
 import javax.inject.Inject
 

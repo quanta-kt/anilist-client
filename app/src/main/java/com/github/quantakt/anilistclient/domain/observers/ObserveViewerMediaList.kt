@@ -1,9 +1,9 @@
 package com.github.quantakt.anilistclient.domain.observers
 
 import androidx.paging.PagingData
-import com.github.quantakt.anilistclient.base.AuthState
+import com.github.quantakt.anilistclient.domain.entities.AuthState
 import com.github.quantakt.anilistclient.domain.entities.MediaListItem
-import com.github.quantakt.anilistclient.domain.ObservableInteractor
+import com.github.quantakt.anilistclient.domain.interactors.ObservableInteractor
 import com.github.quantakt.anilistclient.domain.entities.AnilistMediaListQuery
 import com.github.quantakt.anilistclient.domain.entities.MediaListSort
 import com.github.quantakt.anilistclient.domain.entities.MediaListStatus

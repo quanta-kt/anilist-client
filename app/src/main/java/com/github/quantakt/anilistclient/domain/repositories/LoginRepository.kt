@@ -1,6 +1,6 @@
 package com.github.quantakt.anilistclient.domain.repositories
 
-import com.github.quantakt.anilistclient.base.AuthState
+import com.github.quantakt.anilistclient.domain.entities.AuthState
 import com.github.quantakt.anilistclient.domain.entities.LoggedInUser
 import kotlinx.coroutines.flow.Flow
 
