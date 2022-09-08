@@ -73,6 +73,8 @@ dependencies {
     // Navigation component
     def nav_version = "2.5.1"
     implementation "androidx.navigation:navigation-compose:$nav_version"
+    // Bottom sheets as nav destinations
+    implementation "com.google.accompanist:accompanist-navigation-material:0.26.2-beta"
 
     // Room
     def room_version = "2.4.3"

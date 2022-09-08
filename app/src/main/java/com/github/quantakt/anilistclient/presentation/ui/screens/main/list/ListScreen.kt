@@ -1,20 +1,18 @@
 package com.github.quantakt.anilistclient.presentation.ui.screens.main.list
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetLayout
-import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -28,16 +26,14 @@ import androidx.paging.compose.items
 import coil.compose.rememberImagePainter
 import com.github.quantakt.anilistclient.R
 import com.github.quantakt.anilistclient.domain.entities.MediaListItem
-import com.github.quantakt.anilistclient.domain.entities.MediaListStatus
 import com.github.quantakt.anilistclient.domain.entities.MediaType
-import com.github.quantakt.anilistclient.presentation.localization.stringRes
 import com.github.quantakt.anilistclient.presentation.ui.components.CustomTabRow
-import kotlinx.coroutines.launch
 import java.text.NumberFormat
 
 @Composable
 fun ListScreen(
     listViewModel: ListScreenViewModel = hiltViewModel(),
+    openFilter: (mediaType: MediaType) -> Unit,
 ) {
     val state by listViewModel.state.collectAsState()
 
@@ -46,10 +42,9 @@ fun ListScreen(
         animePagingItems = listViewModel.animePagerFlow.collectAsLazyPagingItems(),
         mangaPagingItems = listViewModel.mangaPagerFlow.collectAsLazyPagingItems(),
         onChangeTab = listViewModel::setSelectedTab,
-        onUpdateAnimeQuery = listViewModel::setAnimeQuery,
-        onUpdateMangaQuery = listViewModel::setMangaQuery,
         onUpdateProgress = listViewModel::onUpdateProgress,
         onUpdateProgressVolume = listViewModel::onUpdateProgressVolume,
+        openFilter = openFilter,
     )
 }
 
@@ -60,248 +55,107 @@ fun ListScreen(
     animePagingItems: LazyPagingItems<MediaListItem>,
     mangaPagingItems: LazyPagingItems<MediaListItem>,
     onChangeTab: (mediaType: MediaType) -> Unit,
-    onUpdateAnimeQuery: (query: ViewerAnimeListQuery) -> Unit,
-    onUpdateMangaQuery: (query: ViewerMangaListQuery) -> Unit,
     onUpdateProgress: (mediaListItem: MediaListItem, progress: Int) -> Unit,
     onUpdateProgressVolume: (mediaListItem: MediaListItem, progress: Int) -> Unit,
+    openFilter: (mediaType: MediaType) -> Unit,
 ) {
 
     val selectedTab = state.selectedTab
     val selectedTabIndex = state.selectedTab.ordinal
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        SmallTopAppBar(
-            modifier = Modifier.fillMaxWidth(),
-            title = {
-                Text(stringResource(R.string.title_list))
-            },
-            actions = {
-                IconButton(onClick = { /*TODO*/ }) {
-                    Icon(imageVector = Icons.Default.Search, contentDescription = null)
-                }
-                IconButton(onClick = { /*TODO*/ }) {
-                    Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
-                }
-            },
-        )
+    Scaffold(
+        topBar = {
+            Column {
+                SmallTopAppBar(
+                    modifier = Modifier.fillMaxWidth(),
+                    title = {
+                        Text(stringResource(R.string.title_list))
+                    },
+                    actions = {
+                        IconButton(onClick = { /*TODO*/ }) {
+                            Icon(imageVector = Icons.Default.Search, contentDescription = null)
+                        }
+                        IconButton(onClick = { /*TODO*/ }) {
+                            Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
+                        }
+                    },
+                )
 
-        CustomTabRow(
-            modifier = Modifier.fillMaxWidth(),
-            selectedTabIndex = selectedTabIndex,
-            contentColor = MaterialTheme.colorScheme.primary,
-        ) {
-            MediaType.values().forEach {
+                CustomTabRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    selectedTabIndex = selectedTabIndex,
+                    contentColor = MaterialTheme.colorScheme.primary,
+                ) {
+                    MediaType.values().forEach {
 
-                val color = if (selectedTab == it) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                }
+                        val color = if (selectedTab == it) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        }
 
-                val label = if (it == MediaType.ANIME) {
-                    R.string.title_anime_list
-                } else {
-                    R.string.title_manga_list
-                }
+                        val label = if (it == MediaType.ANIME) {
+                            R.string.title_anime_list
+                        } else {
+                            R.string.title_manga_list
+                        }
 
-                Tab(
-                    selected = selectedTab == it,
-                    onClick = { onChangeTab(it) },
-                    text = {
-                        Text(
-                            text = stringResource(label),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = color,
+                        Tab(
+                            selected = selectedTab == it,
+                            onClick = { onChangeTab(it) },
+                            text = {
+                                Text(
+                                    text = stringResource(label),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = color,
+                                )
+                            }
                         )
                     }
-                )
-            }
-        }
-
-        when (selectedTab) {
-            MediaType.ANIME -> MediaList(
-                pagingItems = animePagingItems,
-                sheetContent = {
-                    FilterSheet(
-                        type = MediaType.ANIME,
-                        statusFilters = state.animeListQuery.status ?: emptySet(),
-                        onUpdateStatusFilter = {
-                            onUpdateAnimeQuery(state.animeListQuery.copy(status = it.ifEmpty { null }))
-                        },
-                        customLists = state.animeCustomLists,
-                        customListFilter = state.animeListQuery.customListFilter,
-                        onUpdateCustomListFilter = {
-                            onUpdateAnimeQuery(state.animeListQuery.copy(customListFilter = it))
-                        }
-                    )
-                },
-                onUpdateProgress = onUpdateProgress,
-                onUpdateProgressVolume = onUpdateProgressVolume,
-            )
-
-            MediaType.MANGA -> MediaList(
-                pagingItems = mangaPagingItems,
-                sheetContent = {
-                    FilterSheet(
-                        type = MediaType.MANGA,
-                        statusFilters = state.mangaListQuery.status ?: emptySet(),
-                        onUpdateStatusFilter = {
-                            onUpdateMangaQuery(state.mangaListQuery.copy(status = it.ifEmpty { null }))
-                        },
-                        customLists = state.mangaCustomLists,
-                        customListFilter = state.mangaListQuery.customListFilter,
-                        onUpdateCustomListFilter = {
-                            onUpdateMangaQuery(state.mangaListQuery.copy(customListFilter = it))
-                        }
-                    )
-                },
-                onUpdateProgress = onUpdateProgress,
-                onUpdateProgressVolume = onUpdateProgressVolume,
-            )
-        }
-    }
-}
-
-private val allMediaListStatuses = MediaListStatus.values()
-
-@Composable
-private fun FilterSheet(
-    type: MediaType,
-    statusFilters: Set<MediaListStatus>,
-    onUpdateStatusFilter: (Set<MediaListStatus>) -> Unit,
-    customLists: List<String>,
-    customListFilter: String?,
-    onUpdateCustomListFilter: (String?) -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-
-        allMediaListStatuses.forEach { status ->
-            FilterItem(
-                modifier = Modifier.fillMaxWidth(),
-                checked = status in statusFilters,
-                text = stringResource(status.stringRes(type)),
-                onCheckedChange = {
-                    val new = if (it) {
-                        statusFilters + status
-                    } else {
-                        statusFilters - status
-                    }
-
-                    onUpdateStatusFilter(new)
                 }
-            )
-        }
-
-        if (customLists.isNotEmpty()) {
-            Divider(modifier = Modifier.padding(16.dp))
-
-            customLists.forEach { customListName ->
-                FilterItem(
-                    modifier = Modifier.fillMaxWidth(),
-                    checked = customListName == customListFilter,
-                    text = customListName,
-                    onCheckedChange = {
-                        if (it) {
-                            onUpdateCustomListFilter(customListName)
-                        } else {
-                            onUpdateCustomListFilter(null)
-                        }
-                    }
-                )
             }
-        }
-    }
-}
+        },
 
-@Composable
-private fun FilterItem(
-    modifier: Modifier = Modifier,
-    checked: Boolean,
-    text: String,
-    onCheckedChange: (Boolean) -> Unit,
-) {
-    Row(
-        modifier = modifier
-            .clip(MaterialTheme.shapes.small)
-            .width(intrinsicSize = IntrinsicSize.Min)
-            .clickable {
-                onCheckedChange(!checked)
-            }
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Checkbox(
-            checked = checked,
-            onCheckedChange = null
-        )
-
-        Text(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 8.dp),
-            text = text
-        )
-    }
-}
-
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-private fun MediaList(
-    pagingItems: LazyPagingItems<MediaListItem>,
-    sheetContent: @Composable() (ColumnScope.() -> Unit),
-    onUpdateProgress: (mediaListItem: MediaListItem, progress: Int) -> Unit,
-    onUpdateProgressVolume: (mediaListItem: MediaListItem, progress: Int) -> Unit,
-) {
-
-    val scope = rememberCoroutineScope()
-
-    val sheetState = rememberModalBottomSheetState(
-        initialValue = ModalBottomSheetValue.Hidden
-    )
-
-    // TODO: Replace with material 3 bottom sheet API when available
-    ModalBottomSheetLayout(
-        sheetState = sheetState,
-        sheetContent = sheetContent,
-        sheetBackgroundColor = MaterialTheme.colorScheme.surface,
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-
-            MediaListPaging(
-                modifier = Modifier.fillMaxSize(),
-                pagingItems = pagingItems,
-                onUpdateProgress = onUpdateProgress,
-                onUpdateProgressVolume = onUpdateProgressVolume,
-            )
-
+        floatingActionButton = {
             ExtendedFloatingActionButton(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp),
                 text = {
                     Text(stringResource(R.string.action_filter_list))
                 },
                 icon = {
                     Icon(imageVector = Icons.Filled.Sort, contentDescription = null)
                 },
-                onClick = { scope.launch { sheetState.animateTo(ModalBottomSheetValue.Expanded) } }
+                onClick = {
+                    openFilter(state.selectedTab)
+                }
             )
+        },
+
+        content = { paddingValues ->
+            when (selectedTab) {
+                MediaType.ANIME -> MediaListPaging(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = paddingValues,
+                    pagingItems = animePagingItems,
+                    onUpdateProgress = onUpdateProgress,
+                    onUpdateProgressVolume = onUpdateProgressVolume,
+                )
+
+                MediaType.MANGA -> MediaListPaging(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = paddingValues,
+                    pagingItems = mangaPagingItems,
+                    onUpdateProgress = onUpdateProgress,
+                    onUpdateProgressVolume = onUpdateProgressVolume,
+                )
+            }
         }
-    }
+    )
 }
 
 @Composable
 private fun MediaListPaging(
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues,
     pagingItems: LazyPagingItems<MediaListItem>,
     onUpdateProgress: (mediaListItem: MediaListItem, progress: Int) -> Unit,
     onUpdateProgressVolume: (mediaListItem: MediaListItem, progress: Int) -> Unit,
@@ -309,7 +163,9 @@ private fun MediaListPaging(
     val combinedLoadStates = pagingItems.loadState
 
     if (combinedLoadStates.refresh is LoadState.Loading) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = modifier.padding(contentPadding)
+        ) {
             CircularProgressIndicator(
                 modifier = Modifier.align(Alignment.Center)
             )
@@ -318,7 +174,10 @@ private fun MediaListPaging(
         return
     }
 
-    LazyColumn(modifier = modifier) {
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = contentPadding
+    ) {
         items(pagingItems) { item ->
             MediaListItem(
                 modifier = Modifier
@@ -364,9 +223,6 @@ private fun MediaListPaging(
                 else -> {}
             }
         }
-
-        // Space at bottom avoid FAB blocking the last list item
-        item { Spacer(modifier = Modifier.height(80.dp)) }
     }
 }
 
