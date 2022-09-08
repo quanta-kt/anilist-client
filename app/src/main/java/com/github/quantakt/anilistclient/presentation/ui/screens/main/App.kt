@@ -1,6 +1,9 @@
 package com.github.quantakt.anilistclient.presentation.ui.screens.main
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -8,18 +11,14 @@ import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -30,13 +29,18 @@ import com.github.quantakt.anilistclient.presentation.navigation.NavGraph
 import com.github.quantakt.anilistclient.presentation.navigation.Screen
 import com.github.quantakt.anilistclient.presentation.ui.activities.main.MainActivityViewModel
 import com.github.quantakt.anilistclient.presentation.ui.theme.AppTheme
+import com.google.accompanist.navigation.material.ExperimentalMaterialNavigationApi
+import com.google.accompanist.navigation.material.ModalBottomSheetLayout
+import com.google.accompanist.navigation.material.rememberBottomSheetNavigator
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class,
+    ExperimentalMaterialNavigationApi::class)
 @Composable
 fun App(onLoginRequest: () -> Unit) {
-    val navController = rememberNavController()
+    val bottomSheetNavigator = rememberBottomSheetNavigator()
+    val navController = rememberNavController(bottomSheetNavigator)
     val viewModel: MainActivityViewModel = viewModel()
 
     // Observe auth state and navigate to login screen when no logged in user is set
@@ -60,41 +64,39 @@ fun App(onLoginRequest: () -> Unit) {
     }
 
     AppTheme {
-        Scaffold(
-            content = { paddingValues ->
+        ModalBottomSheetLayout(
+            bottomSheetNavigator = bottomSheetNavigator,
+            sheetBackgroundColor = MaterialTheme.colorScheme.surface,
+            sheetContentColor = MaterialTheme.colorScheme.onSurface,
+        ) {
+            Scaffold(
+                content = { sourcePaddingValues ->
 
-                val layoutDirection = LocalLayoutDirection.current
+                    val layoutDirection = LocalLayoutDirection.current
+                    // Discard top insets
+                    val paddingValues = PaddingValues(
+                        top = 0.dp,
+                        bottom = sourcePaddingValues.calculateBottomPadding(),
+                        start = sourcePaddingValues.calculateStartPadding(layoutDirection),
+                        end = sourcePaddingValues.calculateEndPadding(layoutDirection),
+                    )
 
-                val paddingBottom = paddingValues.calculateBottomPadding()
-                val paddingLeft = paddingValues.calculateLeftPadding(layoutDirection)
-                val paddingRight = paddingValues.calculateRightPadding(layoutDirection)
-                val paddingStart = paddingValues.calculateStartPadding(layoutDirection)
-                val paddingEnd = paddingValues.calculateEndPadding(layoutDirection)
-
-                val windowInsets = WindowInsets(
-                    bottom = paddingBottom,
-                    right = paddingRight,
-                    left = paddingLeft,
-                )
-
-                NavGraph(
-                    modifier = Modifier
-                        .padding(
-                            bottom = paddingBottom,
-                            end = paddingEnd,
-                            start = paddingStart
-                        )
-                        .consumedWindowInsets(windowInsets),
-                    navController = navController,
-                    onLoginRequest = onLoginRequest
-                )
-            },
-            bottomBar = {
-                NavBar(
-                    navController = navController
-                )
-            },
-        )
+                    NavGraph(
+                        modifier = Modifier
+                            .padding(paddingValues)
+                            .consumedWindowInsets(paddingValues)
+                            .fillMaxSize(),
+                        navController = navController,
+                        onLoginRequest = onLoginRequest,
+                    )
+                },
+                bottomBar = {
+                    NavBar(
+                        navController = navController
+                    )
+                },
+            )
+        }
     }
 }
 
@@ -104,11 +106,14 @@ private fun NavBar(
     navController: NavController,
 ) {
 
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    val selectedNavItem = backStackEntry?.findScreen()
+    val selectedNavItem = navController.selectedNavItem()
 
     // Show bottom nav only when relevant
-    if (selectedNavItem != null) {
+    AnimatedVisibility(
+        visible = selectedNavItem != null,
+        enter = slideInVertically { it },
+        exit = slideOutVertically { it },
+    ) {
         NavigationBar(modifier = modifier) {
             navItems.forEach { item ->
                 NavBarItem(item = item, selected = selectedNavItem == item) {
@@ -181,7 +186,16 @@ private val routeToScreen = navItems.associateBy { it.screen.route }
 
 @Stable
 @Composable
-private fun NavBackStackEntry.findScreen(): NavItem? {
-    val route = destination.hierarchy.find { it.route in routeToScreen }?.route
-    return routeToScreen[route]
+private fun NavController.selectedNavItem(): NavItem? {
+
+    // Recompose every time current destination changes
+    val backStackEntry by currentBackStackEntryAsState()
+
+    val selectedNavItem = remember(backStackEntry) {
+        // Find the last destination in the back stack which is mapped to a bottom nav item
+        val destination = backQueue.findLast { it.destination.route in routeToScreen }?.destination
+        routeToScreen[destination?.route]
+    }
+
+    return selectedNavItem
 }
