@@ -1,7 +1,6 @@
 package com.github.quantakt.anilistclient.presentation.ui.screens.main.list
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -34,6 +32,7 @@ import java.text.NumberFormat
 fun ListScreen(
     listViewModel: ListScreenViewModel = hiltViewModel(),
     openFilter: (mediaType: MediaType) -> Unit,
+    openMedia: (mediaId: Int) -> Unit,
 ) {
     val state by listViewModel.state.collectAsState()
 
@@ -45,6 +44,7 @@ fun ListScreen(
         onUpdateProgress = listViewModel::onUpdateProgress,
         onUpdateProgressVolume = listViewModel::onUpdateProgressVolume,
         openFilter = openFilter,
+        openMedia = openMedia,
     )
 }
 
@@ -58,6 +58,7 @@ fun ListScreen(
     onUpdateProgress: (mediaListItem: MediaListItem, progress: Int) -> Unit,
     onUpdateProgressVolume: (mediaListItem: MediaListItem, progress: Int) -> Unit,
     openFilter: (mediaType: MediaType) -> Unit,
+    openMedia: (mediaId: Int) -> Unit,
 ) {
 
     val selectedTab = state.selectedTab
@@ -115,7 +116,6 @@ fun ListScreen(
                 }
             }
         },
-
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 text = {
@@ -138,6 +138,7 @@ fun ListScreen(
                     pagingItems = animePagingItems,
                     onUpdateProgress = onUpdateProgress,
                     onUpdateProgressVolume = onUpdateProgressVolume,
+                    openMedia = openMedia,
                 )
 
                 MediaType.MANGA -> MediaListPaging(
@@ -146,9 +147,10 @@ fun ListScreen(
                     pagingItems = mangaPagingItems,
                     onUpdateProgress = onUpdateProgress,
                     onUpdateProgressVolume = onUpdateProgressVolume,
+                    openMedia = openMedia,
                 )
             }
-        }
+        },
     )
 }
 
@@ -159,6 +161,7 @@ private fun MediaListPaging(
     pagingItems: LazyPagingItems<MediaListItem>,
     onUpdateProgress: (mediaListItem: MediaListItem, progress: Int) -> Unit,
     onUpdateProgressVolume: (mediaListItem: MediaListItem, progress: Int) -> Unit,
+    openMedia: (mediaId: Int) -> Unit,
 ) {
     val combinedLoadStates = pagingItems.loadState
 
@@ -194,7 +197,13 @@ private fun MediaListPaging(
                     if (item != null) {
                         onUpdateProgressVolume(item, it)
                     }
-                }
+                },
+                onClick = {
+                    val mediaId = item?.mediaId
+                    if (mediaId != null) {
+                        openMedia(mediaId)
+                    }
+                },
             )
         }
 
@@ -250,12 +259,14 @@ private fun LoadStateError(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MediaListItem(
     modifier: Modifier = Modifier,
     item: MediaListItem?,
     onUpdateProgress: (progress: Int) -> Unit,
     onUpdateProgressVolume: (progress: Int) -> Unit,
+    onClick: () -> Unit,
 ) {
 
     // TODO: Display placeholders when mediaListItem is null
@@ -268,7 +279,8 @@ private fun MediaListItem(
         modifier = modifier,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
-        )
+        ),
+        onClick = onClick
     ) {
 
         Row(modifier = Modifier.height(IntrinsicSize.Min)) {
